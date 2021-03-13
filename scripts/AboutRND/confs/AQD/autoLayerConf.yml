@@ -1,0 +1,7 @@
+RENDER:
+  projRoot: F:\Development\Oem\Resource\Resource
+  renderer: arnold
+  resolution:
+    height: '1080'
+    width: '1920'
+  templateDir: F:\Development\Oem\Resource\Resource\asss\laye
