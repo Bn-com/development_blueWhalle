@@ -499,7 +499,19 @@ class AnAutoLayer(object):
         # shadow layer
         sh_lyer = self._rndLayers['shadow']
         if refMembers['models']:
-            sh_lyer.addMembers(refMembers['models'])
+            for m in refMembers['models']:
+                try:
+                    sh_lyer.addMembers(m)
+                except:
+                    m_shp = m.getShape()
+                    try:
+                        sh_lyer.addMembers(m_shp)
+                    except:
+                        mc.warning(">>> Oops!!! model can not add to {} layer".format(sh_lyer.name()))
+                        if 'shadow layer issue' in self.issue:
+                            self.issue['shadow layer issue'].append(m_shp.name())
+                        else:
+                            self.issue.update({'shadow layer issue': [m_shp.name()]})
             print(">>>Add Meshes to Shadow Layer DONE!!!")
         else:
             print(">>> Missed Models...Shadow LAYER Failed!!!")
