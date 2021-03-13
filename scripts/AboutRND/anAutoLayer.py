@@ -58,8 +58,9 @@ class AnAutoLayer(object):
         self.layered_bg_already = False
         self.layered_chr_already = False
         self.override = False
-        self.save2foder = ""
+        self.save2folder = ""
         self.imageFormat = 'exr'
+        self.saveHoldTiers = True
         #====================run mode =====================
         self._runmode = "reference"
         self._mayaFileTypeDesc= {'ma':'mayaAscii','mb':'mayaBinary'}
@@ -100,7 +101,9 @@ class AnAutoLayer(object):
         self.layered_bg_already = False
         self.layered_chr_already = False
         self.override = False
+        self.save2folder = ""
         self.imageFormat = 'exr'
+        self.saveHoldTiers = True
     @property
     def anFile(self):
         return self._anFile
@@ -203,8 +206,7 @@ class AnAutoLayer(object):
         self._proj = self.anBsnmSplt[0]
         yml_fpth = os.path.join(os.path.dirname(__file__), "confs", self._proj, "autoLayerConf.yml")
         # print(yml_fpth)
-        self.profiles = yml_fpth
-
+        if not self._profiles: self.profiles = yml_fpth
 
     def analyseFilename(self):
         """
@@ -224,7 +226,7 @@ class AnAutoLayer(object):
         self._2basename_chr_spare = "{0}_{1}_{2}.{3}".format(self._proj,self._shotID,self._lightSuffxi_chr,self.fileformatSpare)
         self._2basename_bg = "{0}_{1}_{2}.{3}".format(self._proj,self._shotID,self._lightSuffxi_bg,self.fileformat)
         self._2basename_bg_spare = "{0}_{1}_{2}.{3}".format(self._proj,self._shotID,self._lightSuffxi_bg,self.fileformatSpare)
-
+        self.save2folder = self._fn_outputFolderTier(self.anFile,self._shotType) if self.saveHoldTiers else ""
     def varsFromMaya(self):
         self._mayaDefaultResolution = pm.PyNode("defaultResolution")
         self._mayaDefaultRenderGlobal = pm.PyNode("defaultRenderGlobals")
@@ -261,19 +263,19 @@ class AnAutoLayer(object):
             if not self._searchdir:
                 self._searchdir = self.save2dir
         ## renderlayer template file
-        if not os.path.isdir(os.path.join(self.save2dir,self.save2foder)): os.makedirs(os.path.join(self.save2dir,self.save2foder))
+        if not os.path.isdir(os.path.join(self.save2dir,self.save2folder)): os.makedirs(os.path.join(self.save2dir,self.save2folder))
         self._get_template_fPath()
         if not self._lytmpFpth: return None
         # 确定最终输出的 两个灯光文件的 全路径
-        self._2fpth_chr = os.path.normpath(os.path.join(self.save2dir,self.save2foder,self._2basename_chr))
-        self._2fpth_chr_spare = os.path.normpath(os.path.join(self.save2dir,self.save2foder,self._2basename_chr_spare))
-        self._2fpth_bg = os.path.normpath(os.path.join(self.save2dir,self.save2foder,self._2basename_bg))
-        self._2fpth_bg_spare = os.path.normpath(os.path.join(self.save2dir,self.save2foder,self._2basename_bg_spare))
-        self._srch_fpth_chr = os.path.normpath(os.path.join(self._searchdir,self.save2foder,self._2basename_chr))
-        self._srch_fpth_chr_spare = os.path.normpath(os.path.join(self._searchdir,self.save2foder,self._2basename_chr_spare))
-        self._srch_fpth_bg = os.path.normpath(os.path.join(self._searchdir,self.save2foder,self._2basename_bg))
-        self._srch_fpth_bg_spare = os.path.normpath(os.path.join(self._searchdir, self.save2foder,self._2basename_bg_spare))
-        self.issueLogfile = os.path.join(self.save2dir,self.save2foder,'{}_lyingIssue.log'.format(self.annameAsNamespace))
+        self._2fpth_chr = os.path.normpath(os.path.join(self.save2dir,self.save2folder,self._2basename_chr))
+        self._2fpth_chr_spare = os.path.normpath(os.path.join(self.save2dir,self.save2folder,self._2basename_chr_spare))
+        self._2fpth_bg = os.path.normpath(os.path.join(self.save2dir,self.save2folder,self._2basename_bg))
+        self._2fpth_bg_spare = os.path.normpath(os.path.join(self.save2dir,self.save2folder,self._2basename_bg_spare))
+        self._srch_fpth_chr = os.path.normpath(os.path.join(self._searchdir,self.save2folder,self._2basename_chr))
+        self._srch_fpth_chr_spare = os.path.normpath(os.path.join(self._searchdir,self.save2folder,self._2basename_chr_spare))
+        self._srch_fpth_bg = os.path.normpath(os.path.join(self._searchdir,self.save2folder,self._2basename_bg))
+        self._srch_fpth_bg_spare = os.path.normpath(os.path.join(self._searchdir, self.save2folder,self._2basename_bg_spare))
+        self.issueLogfile = os.path.join(self.save2dir,self.save2folder,'{}_lyingIssue.log'.format(self.annameAsNamespace))
         return True
     def fn_wr2issuefile(self):
         wr2f_str = ""
@@ -323,8 +325,8 @@ class AnAutoLayer(object):
 
         # step0 get necessity variables
         pm.newFile(f=True)
-        print(">>> out put dir >>> {}".format(os.path.join(self.save2dir,self.save2foder)))
-        print(">>> search dir >>> {} ".format(os.path.join(self._searchdir,self.save2foder)))
+        print(">>> out put dir >>> {}".format(os.path.join(self.save2dir,self.save2folder)))
+        print(">>> search dir >>> {} ".format(os.path.join(self._searchdir,self.save2folder)))
         self.vars = self.fn_parsNecessityVars()
         if not self.vars:
             print(">>> Don't Find template file..")
@@ -520,6 +522,19 @@ class AnAutoLayer(object):
                      eshp.primaryVisibility.get()]
         return dict(topGrp = refTop,
                     models= models)
+
+    @staticmethod
+    def _fn_outputFolderTier(path, tier):
+        u"""
+            解析路径，获取文件输出，存储的 子层级文件夹
+        :param path:
+        :param tier:
+        :return:
+        """
+        tier_1_pth = os.path.realpath(os.path.join(path, '../'))
+        remain_tiers = os.path.realpath(os.path.join(path, '../' * tier))
+        return os.path.relpath(tier_1_pth, remain_tiers)
+
     @staticmethod
     def fn_getReferenceTopGrp(oneRef):
         refTop = None
@@ -636,7 +651,8 @@ def main(animDirs,saveRespective=False,outputDir=None):
                 autoLayer = AnAutoLayer()
                 autoLayer.reset()
                 autoLayer.anFile = e_f
-                if saveRespective: autoLayer.save2foder = "{}/{}".format(up2_foldername,up1_foldername)
+                # if saveRespective: autoLayer.save2folder = "{}/{}".format(up2_foldername,up1_foldername)
+                if not saveRespective: autoLayer.saveHoldTiers=False
                 if outputDir: autoLayer.save2dir = outputDir
                 autoLayer.run_autoLayer()
             except Exception as e:
