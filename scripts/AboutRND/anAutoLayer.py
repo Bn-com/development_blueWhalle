@@ -637,20 +637,17 @@ class AnAutoLayer(object):
             else: return False
         else:
             return True
-def main(animDirs,saveRespective=False,outputDir=None):
+def main(animDirs,saveRespective=True,outputDir=None):
     #animDir = r"Y:\project\TV\XXBBT\render\AN\ep130\seq_003"
     if isinstance(animDirs,(str,unicode)):animDirs = [animDirs]
     for edir in animDirs:
         if os.path.isfile(edir): print(">>> process file  < {} >".format(edir))
         else: print(">>> process file in < {} >".format(edir))
-        up1_foldername = os.path.basename(edir) if os.path.isdir(edir) else os.path.basename(os.path.dirname(edir))
-        up2_foldername = os.path.basename(os.path.dirname(edir)) if os.path.isdir(edir) else os.path.basename(os.path.dirname(os.path.dirname(edir)))
         all_anims = []
         if os.path.isfile(edir): all_anims = [edir]
         else:
             all_anims = glob.glob("{}/*.ma".format(edir))
             all_anims.extend(glob.glob("{}/*.mb".format(edir)))
-
         #issueFile = "{}/autlayerLogging.{}.log".format(r"E:/batch_layer_files",time.strftime('%Y%m%d.%H%m%S'))
         # pm.cmdFileOutput(o=issueFile)
         cnt= len(all_anims)
@@ -664,7 +661,7 @@ def main(animDirs,saveRespective=False,outputDir=None):
                 autoLayer.reset()
                 autoLayer.anFile = e_f
                 # if saveRespective: autoLayer.save2folder = "{}/{}".format(up2_foldername,up1_foldername)
-                if not saveRespective: autoLayer.saveHoldTiers=False
+                autoLayer.saveHoldTiers=saveRespective
                 if outputDir: autoLayer.save2dir = outputDir
                 autoLayer.run_autoLayer()
             except Exception as e:
