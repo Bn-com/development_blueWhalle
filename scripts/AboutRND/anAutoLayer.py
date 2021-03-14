@@ -61,6 +61,7 @@ class AnAutoLayer(object):
         self.save2folder = ""
         self.imageFormat = 'exr'
         self.saveHoldTiers = True
+        self.refAnim = None
         #====================run mode =====================
         self._runmode = "reference"
         self._mayaFileTypeDesc= {'ma':'mayaAscii','mb':'mayaBinary'}
@@ -104,6 +105,7 @@ class AnAutoLayer(object):
         self.save2folder = ""
         self.imageFormat = 'exr'
         self.saveHoldTiers = True
+        self.refAnim = None
     @property
     def anFile(self):
         return self._anFile
@@ -227,11 +229,13 @@ class AnAutoLayer(object):
         self._2basename_bg = "{0}_{1}_{2}.{3}".format(self._proj,self._shotID,self._lightSuffxi_bg,self.fileformat)
         self._2basename_bg_spare = "{0}_{1}_{2}.{3}".format(self._proj,self._shotID,self._lightSuffxi_bg,self.fileformatSpare)
         self.save2folder = self._fn_outputFolderTier(self.anFile,self._shotType) if self.saveHoldTiers else ""
+        print(">>> via file name calculates output file name........DONE!!!!")
     def varsFromMaya(self):
         self._mayaDefaultResolution = pm.PyNode("defaultResolution")
         self._mayaDefaultRenderGlobal = pm.PyNode("defaultRenderGlobals")
         # self._minTime = pm.env.minTime
         # self._maxTime = pm.env.maxTime
+        print(">>> Some Maya nodes asign to variables....DONE!!!")
     def fn_parsNecessityVars(self):
         """
             assign value to every necessity variables
@@ -276,6 +280,7 @@ class AnAutoLayer(object):
         self._srch_fpth_bg = os.path.normpath(os.path.join(self._searchdir,self.save2folder,self._2basename_bg))
         self._srch_fpth_bg_spare = os.path.normpath(os.path.join(self._searchdir, self.save2folder,self._2basename_bg_spare))
         self.issueLogfile = os.path.join(self.save2dir,self.save2folder,'{}_lyingIssue.log'.format(self.annameAsNamespace))
+        print(">>> all necessity variables settled................DONE!!!!")
         return True
     def fn_wr2issuefile(self):
         wr2f_str = ""
@@ -336,24 +341,33 @@ class AnAutoLayer(object):
         if not needRun:
             print(">>>Files Alread Exist...Skipped..................")
             return
+        print(">>>                  STEP:  open anim file get time range.....")
         self.fn_getAnimTimerange()
         # step1 animation file ( open or reference )
+        print(">>>                  STEP:  reference animation file.......")
         self._referenceAnim()
+        print(">>>                  STEP: list all assets .....................")
         self.fn_list_assets()
         # stpe2 set camera and resolution,fps,timerange
+        print(">>>                  STEP: set some arugments ....................")
         self.config_renderBasic()
         self._setCamera()
         self.fn_setFPS()
         self.fn_setTimeRange()
         # step3 import layer template file
+        print(">>>                 STEP: ready import layer template ...............")
         self.imp_layerTemp()
         # step 3-4  list render layers
+        print(">>>                 STEP: list all render layers.......................")
         self.fn_listRndLayers()
         # step4 layer assets
+        print(">>>                 STEP: LAYER  PROCEDURE.............................")
         self.layerAllAssets2Rndlyer()
         # step add
+        print(">>>                  STEP: set render parameters ......................")
         self.fn_setRenderParameters()
         # step5 save as bg
+        print(">>>>>>>>>>>>        STEP:  SAVE AS FILE ---------------------------------")
         try:
             if self.layered_bg_already:
                 if self.override: self._saveAsBG()
@@ -499,19 +513,23 @@ class AnAutoLayer(object):
         # shadow layer
         sh_lyer = self._rndLayers['shadow']
         if refMembers['models']:
-            for m in refMembers['models']:
-                try:
-                    sh_lyer.addMembers(m)
-                except:
-                    m_shp = m.getShape()
+            try:
+                msk_lyer.addMembers(refMembers['topGrp'])
+                print(">>>ADD Meshes to MASK Render Layer DONE!!!")
+            except:
+                for m in refMembers['models']:
                     try:
-                        sh_lyer.addMembers(m_shp)
+                        sh_lyer.addMembers(m)
                     except:
-                        mc.warning(">>> Oops!!! model can not add to {} layer".format(sh_lyer.name()))
-                        if 'shadow layer issue' in self.issue:
-                            self.issue['shadow layer issue'].append(m_shp.name())
-                        else:
-                            self.issue.update({'shadow layer issue': [m_shp.name()]})
+                        m_shp = m.getShape()
+                        try:
+                            sh_lyer.addMembers(m_shp)
+                        except:
+                            mc.warning(">>> Oops!!! model can not add to {} layer".format(sh_lyer.name()))
+                            if 'shadow layer issue' in self.issue:
+                                self.issue['shadow layer issue'].append(m_shp.name())
+                            else:
+                                self.issue.update({'shadow layer issue': [m_shp.name()]})
             print(">>>Add Meshes to Shadow Layer DONE!!!")
         else:
             print(">>> Missed Models...Shadow LAYER Failed!!!")
@@ -619,7 +637,12 @@ class AnAutoLayer(object):
 
     def fn_getAnimTimerange(self):
         pm.newFile(f=True)
-        pm.openFile(self.anFile, loadNoReferences=True, f=True,prompt=False)
+        try:
+            pm.openFile(self.anFile, loadNoReferences=True, f=True,prompt=False)
+        except Exception as e:
+            print(e)
+            print("OPEN FILE FAILED: < {} >".format(self.anFile))
+            mc.error("...................Oops ...some issues....")
         self._minTime = pm.env.minTime
         self._maxTime = pm.env.maxTime
         pm.newFile(f=True)
@@ -702,8 +725,8 @@ sys.path.append(r"F:\development\scripts")
 import pymel.core as pm
 from AboutRND import anAutoLayer;reload(anAutoLayer)
 proj_an_dir = r“Y:\project\TV\XXBBT\render\AN" 
-anDirs=[r"{}\ep112\seq_{}".format(proj_an_dir,shotId) for shotId in [4]]
-# anDirs.extend([r"{}\ep112\seq_{:0>3}".format(proj_an_dir,shotId) for shotId in [4]])
+anDirs=[r"{}\ep112\seq_{:0>3}".format(proj_an_dir,shotId) for shotId in [4]]
+# anDirs=[r"{}\ep130\seq_002\XXBBT_ep130_seq002_sc008.Ani_ani.v004.ma".format(proj_an_dir)]
 print("\n".join(anDirs))
-anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0313")    
+anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0314")    
     """
