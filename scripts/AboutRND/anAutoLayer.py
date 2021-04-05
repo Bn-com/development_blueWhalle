@@ -734,6 +734,7 @@ if __name__ == "__main__":
     """
     import os,sys
     
+    
     fileDir = r" F:\Development\Oem\OEM4Maya\scripts"
     if fileDir not in sys.path:
         sys.path.append(fileDir)
