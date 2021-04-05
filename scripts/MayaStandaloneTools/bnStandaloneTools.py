@@ -80,7 +80,9 @@ class BnStandaloneTools_UI(QMainWindow):
         self.maya_version = None
         self._maya_location = None
         self._python_home = None
-
+        #---------------connection-------------------------------
+        self.buttonGroup.buttonClicked.connect(self.update_mayaloc)
+        self.ui.le_myvsn.editingFinished.connect(self.update_mayaloc)
     def setupUi2(self):
         self.buttonGroup = QButtonGroup(self)
         self.buttonGroup.addButton(self.ui.rb_myvs_16)
@@ -104,14 +106,27 @@ class BnStandaloneTools_UI(QMainWindow):
         # self._diyplatter = diyPallet.MyPaletter(self)
         # self._diyplatter._setPlatter()
         self._setPlatter()
+        self._preprocess()
     def reset(self):
         self.maya_version = None
         self._maya_location = None
         self._python_home = None
     def runIt(self):
         print("Em.......................")
+        try:
+            import maya.standalone
+            maya.standalone.initialize(name='python')
+        except Exception as e:
+            print(str(e))
+            self.fn_set_env()
+            import maya.standalone
+            maya.standalone.initialize(name='python')
+    def update_mayaloc(self):
+        """
+            radiobutton connected
+        """
+        print(">>> switch to >>> ")
         self._preprocess()
-
     def _preprocess(self):
         self.reset()
         self._fn_maya_location()
@@ -153,19 +168,32 @@ class BnStandaloneTools_UI(QMainWindow):
     def fn_set_env(self):
         os.environ["MAYA_LOCATION"] = self._maya_location
         os.environ["PYTHONHOME"] = self._python_home
-        # os.environ["PATH"] = "C:\\Program Files\\Autodesk\\Maya2014\\bin;" + os.environ["PATH"]
-        # sys.path.append("C:\Program Files\Autodesk\Maya2014\Python\lib\site-packages\setuptools-0.6c9-py2.6.egg")
-        # sys.path.append("C:\Program Files\Autodesk\Maya2014\Python\lib\site-packages\pymel-1.0.0-py2.6.egg")
-        # sys.path.append("C:\Program Files\Autodesk\Maya2014\Python\lib\site-packages\ipython-0.10.1-py2.6.egg")
-        # sys.path.append("C:\Program Files\Autodesk\Maya2014\Python\lib\site-packages\ply-3.3-py2.6.egg")
-        # sys.path.append("C:\Program Files\Autodesk\Maya2014\\bin\python26.zip")
-        # sys.path.append("C:\Program Files\Autodesk\Maya2014\Python\DLLs")
-        # sys.path.append("C:\Program Files\Autodesk\Maya2014\Python\lib")
-        # sys.path.append("C:\Program Files\Autodesk\Maya2014\Python\lib\plat-win")
-        # sys.path.append("C:\Program Files\Autodesk\Maya2014\Python\lib\lib-tk")
-        # sys.path.append("C:\Program Files\Autodesk\Maya2014\\bin")
-        # sys.path.append("C:\Program Files\Autodesk\Maya2014\Python")
-        # sys.path.append("C:\Program Files\Autodesk\Maya2014\Python\lib\site-packages")
+        # os.environ["PATH"] = cmd.normalJoinpath(self._maya_location,'bin;') + os.environ["PATH"]
+        cmd.update_env("PATH",cmd.normalJoinpath(self._maya_location,'bin;'))
+        #-------------sys.path...---------------------------------------
+        cmd.sysPathAppend(cmd.normalJoinpath(self._python_home,"lib","site-packages","setuptools-0.6c9-py2.6.egg"))
+        # cmd.sysPathAppend("C:\Program Files\Autodesk\Maya2014\Python\lib\site-packages\pymel-1.0.0-py2.6.egg")
+        cmd.sysPathAppend(cmd.normalJoinpath(self._python_home,"lib","site-packages","pymel-1.0.0-py2.6.egg"))
+        # cmd.sysPathAppend("C:\Program Files\Autodesk\Maya2014\Python\lib\site-packages\ipython-0.10.1-py2.6.egg")
+        cmd.sysPathAppend(cmd.normalJoinpath(self._python_home,"lib","site-packages","ipython-0.10.1-py2.6.egg"))
+        # cmd.sysPathAppend("C:\Program Files\Autodesk\Maya2014\Python\lib\site-packages\ply-3.3-py2.6.egg")
+        cmd.sysPathAppend(cmd.normalJoinpath(self._python_home,"lib","site-packages","ply-3.3-py2.6.egg"))
+        # cmd.sysPathAppend("C:\Program Files\Autodesk\Maya2014\\bin\python26.zip")
+        cmd.sysPathAppend(cmd.normalJoinpath(self._maya_location,"bin","python26.zip"))
+        # cmd.sysPathAppend("C:\Program Files\Autodesk\Maya2014\Python\DLLs")
+        cmd.sysPathAppend(cmd.normalJoinpath(self._python_home,"DLLs"))
+        # cmd.sysPathAppend("C:\Program Files\Autodesk\Maya2014\Python\lib")
+        cmd.sysPathAppend(cmd.normalJoinpath(self._python_home, "lib"))
+        # cmd.sysPathAppend("C:\Program Files\Autodesk\Maya2014\Python\lib\plat-win")
+        cmd.sysPathAppend(cmd.normalJoinpath(self._python_home, "lib", "plat-win"))
+        # cmd.sysPathAppend("C:\Program Files\Autodesk\Maya2014\Python\lib\lib-tk")
+        cmd.sysPathAppend(cmd.normalJoinpath(self._python_home, "lib", "lib-tk"))
+        # cmd.sysPathAppend("C:\Program Files\Autodesk\Maya2014\\bin")
+        cmd.sysPathAppend(cmd.normalJoinpath(self._maya_location, "bin"))
+        # cmd.sysPathAppend("C:\Program Files\Autodesk\Maya2014\Python")
+        cmd.sysPathAppend(cmd.normalJoinpath(self._maya_location, "bin"))
+        # cmd.sysPathAppend("C:\Program Files\Autodesk\Maya2014\Python\lib\site-packages")
+        cmd.sysPathAppend(cmd.normalJoinpath(self._python_home,"lib","site-packages"))
     def _setPlatter(self):
         # self.setStyle("Windows")
         # self.setStyle(QStyleFactory.create('Windows'))

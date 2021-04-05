@@ -125,6 +125,16 @@
          <property name="title">
           <string>Execute</string>
          </property>
+         <widget class="QTextEdit" name="txt_cmd">
+          <property name="geometry">
+           <rect>
+            <x>23</x>
+            <y>30</y>
+            <width>561</width>
+            <height>87</height>
+           </rect>
+          </property>
+         </widget>
         </widget>
        </item>
       </layout>
