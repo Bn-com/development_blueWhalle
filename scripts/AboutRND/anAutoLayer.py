@@ -137,7 +137,7 @@ class AnAutoLayer(object):
                         camShp = e_cam.getShape()
                         self._shotCamShps.append(camShp)
                     else:
-                        self._shotCamShps.append(camShp)
+                        self._shotCamShps.append(e_cam)
         return self._shotCamShps
     # @property
     def fn_listRndLayers(self):
@@ -330,8 +330,8 @@ class AnAutoLayer(object):
 
         # step0 get necessity variables
         pm.newFile(f=True)
-        print(">>> out put dir >>> {}".format(os.path.join(self.save2dir,self.save2folder)))
-        print(">>> search dir >>> {} ".format(os.path.join(self._searchdir,self.save2folder)))
+        print(u">>> out put dir >>> {}".format(os.path.join(self.save2dir,self.save2folder)))
+        print(u">>> search dir >>> {} ".format(os.path.join(self._searchdir,self.save2folder)))
         self.vars = self.fn_parsNecessityVars()
         if not self.vars:
             print(">>> Don't Find template file..")
@@ -491,16 +491,46 @@ class AnAutoLayer(object):
         ch_lyer = self._rndLayers['ch']
         if refSort in ['PRO', 'CHR']:
             if refMembers['models']:
-                ch_lyer.addMembers(refMembers['models'])
-                print(">>>Add meshes to CHR renderlayer DONE!!!")
+                try:
+                    ch_lyer.addMembers(refMembers['topGrp'])
+                    print(">>>ADD Meshes to MASK Render Layer DONE!!!")
+                except:
+                    for m in refMembers['models']:
+                        try:
+                            ch_lyer.addMembers(m)
+                        except:
+                            m_shp = m.getShape()
+                            try:
+                                ch_lyer.addMembers(m_shp)
+                            except:
+                                mc.warning(">>> Oops!!! model can not add to {} layer".format(ch_lyer.name()))
+                                if 'shadow layer issue' in self.issue:
+                                    self.issue['ch color layer issue'].append(m_shp.name())
+                                else:
+                                    self.issue.update({'color layer issue': [m_shp.name()]})
             else:
                 print(">>> Missed Modles ...chr CLOR LAYER Failed!!!")
         #chrgblgt
         chidp_lyer = self._rndLayers['chidp']
         if refSort in ['PRO', 'CHR']:
             if refMembers['models']:
-                chidp_lyer.addMembers(refMembers['models'])
-                print(">>>Add meshes to CHR IDPASS Layer DONE!!!")
+                try:
+                    chidp_lyer.addMembers(refMembers['topGrp'])
+                    print(">>>ADD Meshes to MASK Render Layer DONE!!!")
+                except:
+                    for m in refMembers['models']:
+                        try:
+                            chidp_lyer.addMembers(m)
+                        except:
+                            m_shp = m.getShape()
+                            try:
+                                chidp_lyer.addMembers(m_shp)
+                            except:
+                                mc.warning(">>> Oops!!! model can not add to {} layer".format(chidp_lyer.name()))
+                                if 'shadow layer issue' in self.issue:
+                                    self.issue['ch idp layer issue'].append(m_shp.name())
+                                else:
+                                    self.issue.update({'ch idp layer issue': [m_shp.name()]})
             else:
                 print(">>> Missed Modles ...chr IDP LAYER Failed!!!")
         # mask layer
@@ -718,15 +748,15 @@ if __name__ == "__main__":
     # print("????")
     """
 import sys,os,re
-
 from maya import standalone; standalone.initialize()
 sys.path.append(r"F:\development\Lib\site-packages")
 sys.path.append(r"F:\development\scripts")
 import pymel.core as pm
 from AboutRND import anAutoLayer;reload(anAutoLayer)
 proj_an_dir = r“Y:\project\TV\XXBBT\render\AN" 
-anDirs=[r"{}\ep112\seq_{:0>3}".format(proj_an_dir,shotId) for shotId in [4]]
+#proj_an_dir = r“E:\animAotuLayer_outputDir_0314\issue" 
+anDirs=[r"{}\ep110\seq{:0>3}".format(proj_an_dir,shotId) for shotId in [1,2]]
 # anDirs=[r"{}\ep130\seq_002\XXBBT_ep130_seq002_sc008.Ani_ani.v004.ma".format(proj_an_dir)]
 print("\n".join(anDirs))
-anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0314")    
+anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0331")    
     """
