@@ -492,8 +492,8 @@ class AnAutoLayer(object):
         if refSort in ['PRO', 'CHR']:
             if refMembers['models']:
                 try:
-                    ch_lyer.addMembers(refMembers['topGrp'])
-                    print(">>>ADD Meshes to MASK Render Layer DONE!!!")
+                    ch_lyer.addMembers(refMembers['models'])
+                    print(">>>ADD Meshes to character color  Render Layer DONE!!!")
                 except:
                     for m in refMembers['models']:
                         try:
@@ -515,8 +515,8 @@ class AnAutoLayer(object):
         if refSort in ['PRO', 'CHR']:
             if refMembers['models']:
                 try:
-                    chidp_lyer.addMembers(refMembers['topGrp'])
-                    print(">>>ADD Meshes to MASK Render Layer DONE!!!")
+                    chidp_lyer.addMembers(refMembers['models'])
+                    print(">>>ADD Meshes to character idp  Render Layer DONE!!!")
                 except:
                     for m in refMembers['models']:
                         try:
@@ -544,8 +544,8 @@ class AnAutoLayer(object):
         sh_lyer = self._rndLayers['shadow']
         if refMembers['models']:
             try:
-                msk_lyer.addMembers(refMembers['topGrp'])
-                print(">>>ADD Meshes to MASK Render Layer DONE!!!")
+                msk_lyer.addMembers(refMembers['models'])
+                print(">>>ADD Meshes to shadow Render Layer DONE!!!")
             except:
                 for m in refMembers['models']:
                     try:
