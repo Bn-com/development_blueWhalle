@@ -544,7 +544,7 @@ class AnAutoLayer(object):
         sh_lyer = self._rndLayers['shadow']
         if refMembers['models']:
             try:
-                msk_lyer.addMembers(refMembers['models'])
+                sh_lyer.addMembers(refMembers['models'])
                 print(">>>ADD Meshes to shadow Render Layer DONE!!!")
             except:
                 for m in refMembers['models']:
@@ -755,9 +755,9 @@ sys.path.append(r"F:\development\scripts")
 import pymel.core as pm
 from AboutRND import anAutoLayer;reload(anAutoLayer)
 proj_an_dir = r“Y:\project\TV\XXBBT\render\AN" 
-#proj_an_dir = r“E:\animAotuLayer_outputDir_0314\issue" 
-anDirs=[r"{}\ep110\seq{:0>3}".format(proj_an_dir,shotId) for shotId in [1,2]]
+#proj_an_dir = r“E:\TDCheck" 
+anDirs=[r"{}\ep102\seq_{:0>3}".format(proj_an_dir,shotId) for shotId in [3,4]]
 # anDirs=[r"{}\ep130\seq_002\XXBBT_ep130_seq002_sc008.Ani_ani.v004.ma".format(proj_an_dir)]
 print("\n".join(anDirs))
-anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0331")    
+anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0407")    
     """
