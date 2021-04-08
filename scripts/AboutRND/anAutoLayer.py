@@ -756,8 +756,8 @@ import pymel.core as pm
 from AboutRND import anAutoLayer;reload(anAutoLayer)
 proj_an_dir = r“Y:\project\TV\XXBBT\render\AN" 
 #proj_an_dir = r“E:\TDCheck" 
-anDirs=[r"{}\ep102\seq_{:0>3}".format(proj_an_dir,shotId) for shotId in [3,4]]
+anDirs=[r"{}\ep145\seq{:0>3}".format(proj_an_dir,shotId) for shotId in [2]]
 # anDirs=[r"{}\ep130\seq_002\XXBBT_ep130_seq002_sc008.Ani_ani.v004.ma".format(proj_an_dir)]
 print("\n".join(anDirs))
-anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0407")    
+anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0408")    
     """
