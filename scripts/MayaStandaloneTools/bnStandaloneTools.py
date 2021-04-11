@@ -18,7 +18,17 @@ try:
 except:
     from io import StringIO
 import logging
+logging.basicConfig(stream=sys.stdout,level = logging.INFO,format = '%(module)s.%(funcName)s %(lineno)s- %(levelname)s - %(message)s')
+#声明了一个 Logger 对象
 logger = logging.getLogger(__name__)
+
+# root = logging.getLogger()
+# root.setLevel(logging.DEBUG)
+# handler = logging.StreamHandler(sys.stdout)
+# handler.setLevel(logging.DEBUG)
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# handler.setFormatter(formatter)
+# root.addHandler(handler)
 if str(sys.executable).endswith("maya.exe"):
     import maya.OpenMayaUI as mui
     try:
@@ -60,6 +70,7 @@ import command as cmd
 import upEnv
 import optTxtEdt
 import diyPallet
+
 class BnStandaloneTools_UI(QMainWindow):
     def __init__(self, parent=None):
         super(BnStandaloneTools_UI, self).__init__(parent)
@@ -73,6 +84,7 @@ class BnStandaloneTools_UI(QMainWindow):
         try: 1/0; import BnStandaloneTools_2py as xx;self.ui = xx.Ui_BnStandaloneTools_mainWin()
         except: pass
         self.pb_lst = self.findChildren(QPushButton)
+        # self.ui.grp_exec.setStyleSheet("QGroupBox:title {color: #80C8FA;}")
         self.setupUi2()
         self.move(200,200)
         # self.resize()
@@ -80,6 +92,7 @@ class BnStandaloneTools_UI(QMainWindow):
         self.maya_version = None
         self._maya_location = None
         self._python_home = None
+        self._exec = None
         #---------------connection-------------------------------
         self.buttonGroup.buttonClicked.connect(self.update_mayaloc)
         self.ui.le_myvsn.editingFinished.connect(self.update_mayaloc)
@@ -93,7 +106,7 @@ class BnStandaloneTools_UI(QMainWindow):
         self.opt = optTxtEdt.OptTxEdt(self.ui.frm_opt)
         self.opt_ly = QVBoxLayout(self.ui.frm_opt)
         self.opt_ly.addWidget(self.opt)
-        self.opt.redirectOPT()
+
         for e_bt in self.pb_lst:
             # print(e_pt.objectName())
             if e_bt.objectName() not in ['pb_run']:
@@ -104,21 +117,33 @@ class BnStandaloneTools_UI(QMainWindow):
         except:
             pass
         # self._diyplatter = diyPallet.MyPaletter(self)
-        # self._diyplatter._setPlatter()
-        self._setPlatter()
+        # self._diyplatter._setPalette()
+        self._setPalette()
         self._preprocess()
+        self.opt.redirectOPT()
+        # self.ui.grp_exec.setStyleSheet('QGroupBox {color: green;background-color: #21323F}')
+        self.fn_set_autlayer2defualt_exec()
+        self._set_exec_txt()
+
+    def _set_exec_txt(self):
+        self.ui.txt_cmd.setText(self._exec)
+    def _setup_exec_group(self):
+        self.ui.grp_exec.setAcceptDrops(True)
+        self.ui.txt_cmd.setAcceptDrops(False)
+
     def reset(self):
         self.maya_version = None
         self._maya_location = None
         self._python_home = None
     def runIt(self):
-        print("Em.......................")
+        # print("Em.......................")
         try:
             import maya.standalone
             maya.standalone.initialize(name='python')
         except Exception as e:
             print(str(e))
             self.fn_set_env()
+            print("\n".join(sys.path))
             import maya.standalone
             maya.standalone.initialize(name='python')
     def update_mayaloc(self):
@@ -146,10 +171,12 @@ class BnStandaloneTools_UI(QMainWindow):
         """
             set mayapy lable text
         """
+        print("....mayapy.exe ........locate.....")
+        print(self._maya_location)
         if self._maya_location:
-            self.ui.lb_mayapy.setText(cmd.joinpath(self._maya_location, 'bin', 'mayapy.exe'))
+            self.ui.lb_mayapy.setText(">>>" + cmd.joinpath(self._maya_location, 'bin', 'mayapy.exe'))
         else:
-            self.ui.lb_mayapy.setText(u"没有找到maya{}安装路径".format(self.maya_version))
+            self.ui.lb_mayapy.setText(">>>" + u"没有找到maya{}安装路径".format(self.maya_version))
 
 
     def _fn_maya_location(self):
@@ -160,10 +187,48 @@ class BnStandaloneTools_UI(QMainWindow):
         winenv.name="InstallLocation"
         maya_loc = winenv.getenv()
         if not maya_loc:
-            logger.error(u"您的系统中没有找到 maya{} 的安装路径".format(self.maya_version))
+            # logger.info(u"您的系统中没有找到 maya{} 的安装路径".format(self.maya_version))
             return
         self._maya_location = maya_loc
         self._python_home = cmd.normalJoinpath(maya_loc,'Python')
+        return True
+    def fn_set_autlayer2defualt_exec(self):
+        """
+            set default exec py file
+        :return:
+        """
+        moduleDir = cmd.tierpath(sys.argv[0],1)
+        autoLayer_py = cmd.joinpath(moduleDir,'execs','anAutoLayer.py')
+        self._exec = autoLayer_py
+
+   #------drop --------------drag--------------------
+    def dragEnterEvent(self, event):
+        print('drag-enter')
+        if event.mimeData().hasUrls():
+            print(event.mimeData().urls()[-1])
+            event.accept()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, e):
+        #        print("DragMove")
+        e.accept()
+
+    # def dropEvent(self, e):
+    #     #        print("DropEvent")
+    #     #        position = e.pos()
+    #     #        print(position)
+    #     self.output.setText("wtf...........")  # +++
+    #     e.setDropAction(Qt.MoveAction)  # +++
+    #     e.accept()
+    def dropEvent(self, event):
+        url = event.mimeData().urls()[-1]
+        self._exec = url.toLocalFile()
+        if self._exec.endswith('.py'):
+            #self.executeObject.emit(self._exec)
+            self.ui.txt_cmd.setText(self._exec)
+        # event.setDropAction(Qt.MoveAction)
+        event.accept()
 
     def fn_set_env(self):
         os.environ["MAYA_LOCATION"] = self._maya_location
@@ -194,7 +259,7 @@ class BnStandaloneTools_UI(QMainWindow):
         cmd.sysPathAppend(cmd.normalJoinpath(self._maya_location, "bin"))
         # cmd.sysPathAppend("C:\Program Files\Autodesk\Maya2014\Python\lib\site-packages")
         cmd.sysPathAppend(cmd.normalJoinpath(self._python_home,"lib","site-packages"))
-    def _setPlatter(self):
+    def _setPalette(self):
         # self.setStyle("Windows")
         # self.setStyle(QStyleFactory.create('Windows'))
         palette = QPalette()
@@ -205,7 +270,7 @@ class BnStandaloneTools_UI(QMainWindow):
         # palette.setColor(QPalette.Base, QColor(25, 25, 25))
         palette.setColor(QPalette.Base, QColor(33, 50, 63))
         palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-        palette.setColor(QPalette.ToolTipBase, Qt.black)
+        palette.setColor(QPalette.ToolTipBase, Qt.green)
         palette.setColor(QPalette.ToolTipText, Qt.white)
         palette.setColor(QPalette.Text, QColor(255, 128, 0))
         # palette.setColor(QPalette.Button, QColor(0, 0, 0))
@@ -239,6 +304,7 @@ for widget in qApp.allWidgets():
 xx = xxx.BnStandaloneTools_UI(xxx.getMayaWindow())
 xx.show()
     """
+
     app = QApplication(sys.argv)
     # view = UI()
     view = BnStandaloneTools_UI()

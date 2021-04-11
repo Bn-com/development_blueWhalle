@@ -30,6 +30,13 @@ def joinpath(*args):
 def normalJoinpath(*args):
     return os.path.normpath(os.path.join(*args))
 
+def tierpath(path,tier=0,normalize=True):
+    if normalize: return os.path.abspath(normalJoinpath(path,"../"*tier))
+    else: return os.path.abspath(joinpath(path,"../"*tier))
+def tierfolder(path,tier=0):
+    bsnm = os.path.basename(tierpath(path,tier))
+    if not bsnm: bsnm = os.path.splitdrive(path)[0]
+    return bsnm
 
 def update_env(var,value):
     old_v = os.environ[var]

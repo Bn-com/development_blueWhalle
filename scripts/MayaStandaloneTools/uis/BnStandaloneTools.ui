@@ -121,20 +121,15 @@
         </widget>
        </item>
        <item row="1" column="0" colspan="2">
-        <widget class="QGroupBox" name="groupBox_2">
+        <widget class="QGroupBox" name="grp_exec">
          <property name="title">
           <string>Execute</string>
          </property>
-         <widget class="QTextEdit" name="txt_cmd">
-          <property name="geometry">
-           <rect>
-            <x>23</x>
-            <y>30</y>
-            <width>561</width>
-            <height>87</height>
-           </rect>
-          </property>
-         </widget>
+         <layout class="QGridLayout" name="gridLayout_4">
+          <item row="0" column="0">
+           <widget class="QTextEdit" name="txt_cmd"/>
+          </item>
+         </layout>
         </widget>
        </item>
       </layout>

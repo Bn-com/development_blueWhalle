@@ -49,60 +49,13 @@ import logging
 # logger.addHandler(handler)
 # logger.setLevel(logging.DEBUG)
 
-# class Stream(QObject):
-#     _stdout = None
-#     _stderr = None
-#     messageWritten = Signal(str)
-#     def flush( self ):
-#         pass
-#     def fileno( self ):
-#         return -1
-#     def write( self, msg ):
-#         if ( not self.signalsBlocked() ):
-#             self.messageWritten.emit(unicode(msg))
-#
-#     @staticmethod
-#     def stdout():
-#         if ( not Stream._stdout ):
-#             Stream._stdout = Stream()
-#             sys.stdout = Stream._stdout
-#         return Stream._stdout
-#
-#     @staticmethod
-#     def stderr():
-#         if ( not Stream._stderr ):
-#             Stream._stderr = Stream()
-#             sys.stderr = Stream._stderr
-#         return Stream._stderr
 
-
-
-class OptTxEdt(QWidget):
+class ExecTxtEdt(QTextEdit):
     executeObject = Signal(str)
     def __init__(self,*args,**kwargs):
-        super(OptTxEdt, self).__init__(*args,**kwargs)
-        self.output = QTextEdit(self)
-        self.layout = QVBoxLayout()
-        # self.frame = QFrame(self)
-        self.hlayout = QHBoxLayout()
-        self.bt_clr = QPushButton(self)
-        self.bt_clr.setText("clear...")
-        self.bt_run = QPushButton(self)
-        self.bt_run.setText("run bat")
-        self.hlayout.addWidget(self.bt_clr)
-        self.hlayout.addWidget(self.bt_run)
-        # self.frame.setLayout(self.hlayout)
-        self.layout.addWidget(self.output)
-        self.layout.addLayout(self.hlayout)
-        self.setLayout(self.layout)
-        # self.initUI()
+        super(ExecTxtEdt, self).__init__(*args,**kwargs)
         self.executeBat = None
-        self.bt_clr.clicked.connect(self.output.clear)
-        self.bt_run.clicked.connect(self.internalCalling)
         self.setAcceptDrops(True)
-        self.output.setAcceptDrops(False)
-        # self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setWindowTitle(">>>bat debug")
 
     def initUI_process(self):
         # Layout are better for placing widgets
