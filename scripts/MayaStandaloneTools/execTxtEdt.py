@@ -51,10 +51,10 @@ import logging
 
 
 class ExecTxtEdt(QTextEdit):
-    executeObject = Signal(str)
+    SgExecObj = Signal(str)
     def __init__(self,*args,**kwargs):
         super(ExecTxtEdt, self).__init__(*args,**kwargs)
-        self.executeBat = None
+        self._executeobj = None
         self.setAcceptDrops(True)
 
     def initUI_process(self):
@@ -93,57 +93,21 @@ class ExecTxtEdt(QTextEdit):
         #        print("DragMove")
         e.accept()
 
-    # def dropEvent(self, e):
-    #     #        print("DropEvent")
-    #     #        position = e.pos()
-    #     #        print(position)
-    #     self.output.setText("wtf...........")  # +++
-    #     e.setDropAction(Qt.MoveAction)  # +++
-    #     e.accept()
     def dropEvent(self, event):
         url = event.mimeData().urls()[-1]
-        self.executeBat  = url.toLocalFile()
-        if self.executeBat .endswith('.bat'):
-            self.executeObject.emit(self.executeBat)
-            self.output.setText(self.executeBat)
+        self._executeobj  = url.toLocalFile().encode('utf-8')
+        f_h,f_ext = os.path.splitext(self._executeobj)
+        if f_ext in ['.py','.pyc','.mel']:
+            self.SgExecObj.emit(self._executeobj)
+            self.setText(self._executeobj)
         # event.setDropAction(Qt.MoveAction)
-        event.accept()
-    def internalCalling(self):
-        self.initUI_process()
-        # print(self.executeBat)
-        if self.executeBat:
-            self.callProgram(self.executeBat)
-            if self.process.waitForFinished():
-                print("ok")
-        else:
-            print("......")
-    def redirectOPT(self):
-        # sys.stdout = Log(self.txtedit)
-        sys.stdout = Stream()
-        sys.stdout.newText.connect(self.opt2txt)
-        # sys.stdout.messageWritten.connect(self.opt2txt)
-        sys.stderr = Stream()
-        sys.stderr.newText.connect(self.opt2txt)
-    def opt2txt(self, text,color=None):
-        # print("get Message ....{}".format(text))
-        cursor = self.output.textCursor()
-        cursor.movePosition(QTextCursor.End)
-        if color or text.startswith('#'):
-            text = self.richTxt(text)
-            cursor.insertHtml(str(text,'utf-8'))
-            # txt_ex = unicode(text.decode('utf-8').encode('gb2312') )
-            # txt_ex = "llllllllllllll    {}".format(text.decode('gbk'))
-            # cursor.insertHtml(txt_ex)
+            event.accept()
+        else: event.ignore()
 
-            # cursor.insertText(os.linesep)
-        else:
-            cursor.insertText(text)
-        self.output.setTextCursor(cursor)
-        self.output.ensureCursorVisible()
 #Function Main Start
 def main():
     app = QApplication(sys.argv)
-    ui=OptTxEdt()
+    ui=ExecTxtEdt()
     ui.show()
     # bat = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'exec', 'maya2016.bat')
     # print(bat)

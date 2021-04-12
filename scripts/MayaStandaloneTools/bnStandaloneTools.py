@@ -70,7 +70,7 @@ import command as cmd
 import upEnv
 import optTxtEdt
 import diyPallet
-
+import execTxtEdt;reload(execTxtEdt)
 class BnStandaloneTools_UI(QMainWindow):
     def __init__(self, parent=None):
         super(BnStandaloneTools_UI, self).__init__(parent)
@@ -116,17 +116,23 @@ class BnStandaloneTools_UI(QMainWindow):
             self.ui.pb_run.clicked.connect(self.runIt)
         except:
             pass
+        self.exec_txt = execTxtEdt.ExecTxtEdt(self.ui.frm_exec)
+        self.ui.vlyout_4.addWidget(self.exec_txt)
+        self.exec_txt.SgExecObj.connect(self._set_exec_txt)
         # self._diyplatter = diyPallet.MyPaletter(self)
         # self._diyplatter._setPalette()
         self._setPalette()
         self._preprocess()
-        self.opt.redirectOPT()
+        # self.opt.redirectOPT()
         # self.ui.grp_exec.setStyleSheet('QGroupBox {color: green;background-color: #21323F}')
         self.fn_set_autlayer2defualt_exec()
         self._set_exec_txt()
 
-    def _set_exec_txt(self):
-        self.ui.txt_cmd.setText(self._exec)
+    @Slot()
+    def _set_exec_txt(self,q=None):
+        if not q: q=self._exec
+        self.exec_txt.setText(q)
+
     def _setup_exec_group(self):
         self.ui.grp_exec.setAcceptDrops(True)
         self.ui.txt_cmd.setAcceptDrops(False)
@@ -136,16 +142,18 @@ class BnStandaloneTools_UI(QMainWindow):
         self._maya_location = None
         self._python_home = None
     def runIt(self):
+
         # print("Em.......................")
-        try:
-            import maya.standalone
-            maya.standalone.initialize(name='python')
-        except Exception as e:
-            print(str(e))
-            self.fn_set_env()
-            print("\n".join(sys.path))
-            import maya.standalone
-            maya.standalone.initialize(name='python')
+        # try:
+        #     import maya.standalone
+        #     maya.standalone.initialize(name='python')
+        # except Exception as e:
+        #     print(str(e))
+        #     # self.fn_set_env()
+        #     # print("\n".join(sys.path))
+        #     import maya.standalone
+        #     maya.standalone.initialize(name='python')
+        # print(".....................................em...........????")
     def update_mayaloc(self):
         """
             radiobutton connected
@@ -178,7 +186,6 @@ class BnStandaloneTools_UI(QMainWindow):
         else:
             self.ui.lb_mayapy.setText(">>>" + u"没有找到maya{}安装路径".format(self.maya_version))
 
-
     def _fn_maya_location(self):
         self.maya_version = self._fn_q_maya_version()
         print(self.maya_version)
@@ -200,35 +207,6 @@ class BnStandaloneTools_UI(QMainWindow):
         moduleDir = cmd.tierpath(sys.argv[0],1)
         autoLayer_py = cmd.joinpath(moduleDir,'execs','anAutoLayer.py')
         self._exec = autoLayer_py
-
-   #------drop --------------drag--------------------
-    def dragEnterEvent(self, event):
-        print('drag-enter')
-        if event.mimeData().hasUrls():
-            print(event.mimeData().urls()[-1])
-            event.accept()
-        else:
-            event.ignore()
-
-    def dragMoveEvent(self, e):
-        #        print("DragMove")
-        e.accept()
-
-    # def dropEvent(self, e):
-    #     #        print("DropEvent")
-    #     #        position = e.pos()
-    #     #        print(position)
-    #     self.output.setText("wtf...........")  # +++
-    #     e.setDropAction(Qt.MoveAction)  # +++
-    #     e.accept()
-    def dropEvent(self, event):
-        url = event.mimeData().urls()[-1]
-        self._exec = url.toLocalFile()
-        if self._exec.endswith('.py'):
-            #self.executeObject.emit(self._exec)
-            self.ui.txt_cmd.setText(self._exec)
-        # event.setDropAction(Qt.MoveAction)
-        event.accept()
 
     def fn_set_env(self):
         os.environ["MAYA_LOCATION"] = self._maya_location
