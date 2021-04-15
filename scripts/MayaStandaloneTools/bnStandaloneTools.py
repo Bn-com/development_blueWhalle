@@ -11,16 +11,28 @@ THEOREM: A good programmer should wipe the butts of his predecessors in an amica
         As long as this , code is far away from bugs, and with the god animal protecting
             I love animals. They taste delicious.
 """
-import sys,re,os,copy,inspect,random
+import sys,re,os,copy,inspect,random,time
 import xml.etree.ElementTree as xml
 try:
     from cStringIO import StringIO
 except:
     from io import StringIO
 import logging
-logging.basicConfig(stream=sys.stdout,level = logging.INFO,format = '%(module)s.%(funcName)s %(lineno)s- %(levelname)s - %(message)s')
-#声明了一个 Logger 对象
-logger = logging.getLogger(__name__)
+# logging.basicConfig(stream=sys.stdout,level = logging.INFO,format = '%(module)s.%(funcName)s %(lineno)s- %(levelname)s - %(message)s')
+# #声明了一个 Logger 对象
+# logger = logging.getLogger(__name__)
+
+root = logging.getLogger()
+root.setLevel(logging.DEBUG)
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+root.addHandler(handler)
+
+
+
 
 # root = logging.getLogger()
 # root.setLevel(logging.DEBUG)
@@ -93,6 +105,9 @@ class BnStandaloneTools_UI(QMainWindow):
         self._maya_location = None
         self._python_home = None
         self._exec = None
+        self._mayapy_path = None
+        self._searchDir = None
+        self._outputDir = cmd.joinpath(os.getenv('temp'),'MayaStandaonle_output{0}'.format(time.strftime('%Y%m%d_%H%M%S')))
         #---------------connection-------------------------------
         self.buttonGroup.buttonClicked.connect(self.update_mayaloc)
         self.ui.le_myvsn.editingFinished.connect(self.update_mayaloc)
@@ -123,13 +138,16 @@ class BnStandaloneTools_UI(QMainWindow):
         # self._diyplatter._setPalette()
         self._setPalette()
         self._preprocess()
-        # self.opt.redirectOPT()
+
         # self.ui.grp_exec.setStyleSheet('QGroupBox {color: green;background-color: #21323F}')
         self.fn_set_autlayer2defualt_exec()
         self._set_exec_txt()
-
+        self.opt.redirectOPT()
     @Slot()
     def _set_exec_txt(self,q=None):
+        """
+            set execute text edit contents....
+        """
         if not q: q=self._exec
         self.exec_txt.setText(q)
 
@@ -142,7 +160,9 @@ class BnStandaloneTools_UI(QMainWindow):
         self._maya_location = None
         self._python_home = None
     def runIt(self):
-
+        if not self._mayapy_path:
+            logger.error("Do not find mayapy.exe ..................")
+        print(">>>Output Director : < {} >".format(self._outputDir))
         # print("Em.......................")
         # try:
         #     import maya.standalone
@@ -182,7 +202,8 @@ class BnStandaloneTools_UI(QMainWindow):
         print("....mayapy.exe ........locate.....")
         print(self._maya_location)
         if self._maya_location:
-            self.ui.lb_mayapy.setText(">>>" + cmd.joinpath(self._maya_location, 'bin', 'mayapy.exe'))
+            self._mayapy_path = cmd.joinpath(self._maya_location, 'bin', 'mayapy.exe')
+            self.ui.lb_mayapy.setText(">>>" +  self._mayapy_path)
         else:
             self.ui.lb_mayapy.setText(">>>" + u"没有找到maya{}安装路径".format(self.maya_version))
 
