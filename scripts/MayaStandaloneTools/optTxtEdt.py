@@ -26,12 +26,12 @@ import pysideuic as uic
 # import pyside2uic as uic
 #  ============= ===live template require variables =====================
 #  o  utputTxtplan O OutputTxtplan || OutputTxtplan  utputtxtplan
-class Stream(QObject):
-    newText = Signal(str)
-    # def __init__(self):
-    #     super(Stream,self).__init__()
-    def write(self, text):
-        self.newText.emit(str(text).decode('gb2312'))
+# class Stream(QObject):
+#     newText = Signal(str)
+#     # def __init__(self):
+#     #     super(Stream,self).__init__()
+#     def write(self, text):
+#         self.newText.emit(str(text).decode('gb2312'))
 import logging
 # logger = logging.getLogger(__name__)
 #
@@ -74,6 +74,47 @@ import logging
 #             Stream._stderr = Stream()
 #             sys.stderr = Stream._stderr
 #         return Stream._stderr
+class QtHandler(logging.Handler):
+
+    def __init__(self):
+        logging.Handler.__init__(self)
+
+    def emit(self, record):
+        record = self.format(record)
+        XStream.stdout().write("{}\n".format(record))
+
+class XStream(QObject):
+    _stdout = None
+    _stderr = None
+    messageWritten = Signal(str)
+    def flush( self ):
+        pass
+    def fileno( self ):
+        return -1
+    def write( self, msg ):
+        if ( not self.signalsBlocked() ):
+            self.messageWritten.emit(unicode(msg))
+
+    @staticmethod
+    def stdout():
+        if ( not XStream._stdout ):
+            XStream._stdout = XStream()
+            sys.stdout = XStream._stdout
+        return XStream._stdout
+
+    @staticmethod
+    def stderr():
+        if ( not XStream._stderr ):
+            XStream._stderr = XStream()
+            sys.stderr = XStream._stderr
+        return XStream._stderr
+
+
+logger = logging.getLogger(__name__)
+handler = QtHandler()
+handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
 
 
 
@@ -166,11 +207,12 @@ class OptTxEdt(QWidget):
             print("......")
     def redirectOPT(self):
         # sys.stdout = Log(self.txtedit)
-        sys.stdout = Stream()
-        sys.stdout.newText.connect(self.opt2txt)
+        # sys.stdout = XStream()
+        # sys.stdout.newText.connect(self.opt2txt)
+        XStream.stdout().messageWritten.connect(self.opt2txt)
         # sys.stdout.messageWritten.connect(self.opt2txt)
-        sys.stderr = Stream()
-        sys.stderr.newText.connect(self.opt2txt)
+        # sys.stderr = XStream()
+        XStream.stderr().messageWritten.connect(self.opt2txt)
     def opt2txt(self, text,color=None):
         # print("get Message ....{}".format(text))
         cursor = self.output.textCursor()
@@ -191,6 +233,7 @@ class OptTxEdt(QWidget):
 def main():
     app = QApplication(sys.argv)
     ui=OptTxEdt()
+    ui.redirectOPT()
     ui.show()
     # bat = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'exec', 'maya2016.bat')
     # print(bat)

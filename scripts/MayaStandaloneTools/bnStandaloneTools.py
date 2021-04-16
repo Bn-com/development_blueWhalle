@@ -13,34 +13,12 @@ THEOREM: A good programmer should wipe the butts of his predecessors in an amica
 """
 import sys,re,os,copy,inspect,random,time
 import xml.etree.ElementTree as xml
+import subprocess
 try:
     from cStringIO import StringIO
 except:
     from io import StringIO
-import logging
-# logging.basicConfig(stream=sys.stdout,level = logging.INFO,format = '%(module)s.%(funcName)s %(lineno)s- %(levelname)s - %(message)s')
-# #声明了一个 Logger 对象
-# logger = logging.getLogger(__name__)
 
-root = logging.getLogger()
-root.setLevel(logging.DEBUG)
-
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-root.addHandler(handler)
-
-
-
-
-# root = logging.getLogger()
-# root.setLevel(logging.DEBUG)
-# handler = logging.StreamHandler(sys.stdout)
-# handler.setLevel(logging.DEBUG)
-# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# handler.setFormatter(formatter)
-# root.addHandler(handler)
 if str(sys.executable).endswith("maya.exe"):
     import maya.OpenMayaUI as mui
     try:
@@ -83,6 +61,28 @@ import upEnv
 import optTxtEdt
 import diyPallet
 import execTxtEdt;reload(execTxtEdt)
+
+import logging
+logger = logging.getLogger(__name__)
+
+class QtHandler(logging.Handler):
+
+    def __init__(self):
+        logging.Handler.__init__(self)
+
+    def emit(self, record):
+        record = self.format(record)
+        optTxtEdt.XStream.stdout().write("{}\n".format(record))
+
+handler = QtHandler()
+handler.setFormatter(logging.Formatter("[%(levelname)s] < %(module)s::%(funcName)s::%(lineno)04d>: %(message)s"))
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
+
+
+
+
+
 class BnStandaloneTools_UI(QMainWindow):
     def __init__(self, parent=None):
         super(BnStandaloneTools_UI, self).__init__(parent)
@@ -97,7 +97,6 @@ class BnStandaloneTools_UI(QMainWindow):
         except: pass
         self.pb_lst = self.findChildren(QPushButton)
         # self.ui.grp_exec.setStyleSheet("QGroupBox:title {color: #80C8FA;}")
-        self.setupUi2()
         self.move(200,200)
         # self.resize()
         #---------------------variables-------------------------
@@ -108,9 +107,9 @@ class BnStandaloneTools_UI(QMainWindow):
         self._mayapy_path = None
         self._searchDir = None
         self._outputDir = cmd.joinpath(os.getenv('temp'),'MayaStandaonle_output{0}'.format(time.strftime('%Y%m%d_%H%M%S')))
+        self.setupUi2()
         #---------------connection-------------------------------
-        self.buttonGroup.buttonClicked.connect(self.update_mayaloc)
-        self.ui.le_myvsn.editingFinished.connect(self.update_mayaloc)
+
     def setupUi2(self):
         self.buttonGroup = QButtonGroup(self)
         self.buttonGroup.addButton(self.ui.rb_myvs_16)
@@ -141,16 +140,21 @@ class BnStandaloneTools_UI(QMainWindow):
 
         # self.ui.grp_exec.setStyleSheet('QGroupBox {color: green;background-color: #21323F}')
         self.fn_set_autlayer2defualt_exec()
-        self._set_exec_txt()
-        self.opt.redirectOPT()
+        # ==============connect =========================================
+        self.buttonGroup.buttonClicked.connect(self.update_mayaloc)
+        self.ui.le_myvsn.editingFinished.connect(self.update_mayaloc)
+        #================set ui element ================================
+        self.ui.le_opt.setText(self._outputDir)
+        # self.opt.redirectOPT()
     @Slot()
     def _set_exec_txt(self,q=None):
         """
             set execute text edit contents....
         """
-        if not q: q=self._exec
-        self.exec_txt.setText(q)
-
+        # if not q: q=self._exec
+        self._exec = q
+        self.exec_txt.setText(self._exec )
+        print(">>> Execute Set to File > {}".format(self._exec))
     def _setup_exec_group(self):
         self.ui.grp_exec.setAcceptDrops(True)
         self.ui.txt_cmd.setAcceptDrops(False)
@@ -161,8 +165,11 @@ class BnStandaloneTools_UI(QMainWindow):
         self._python_home = None
     def runIt(self):
         if not self._mayapy_path:
-            logger.error("Do not find mayapy.exe ..................")
+            logger.error("DO NOT FIND mayapy.exe !!!!!")
+            return
         print(">>>Output Director : < {} >".format(self._outputDir))
+        print("Ready to ...............")
+        self._invoke_mayapy()
         # print("Em.......................")
         # try:
         #     import maya.standalone
@@ -174,6 +181,18 @@ class BnStandaloneTools_UI(QMainWindow):
         #     import maya.standalone
         #     maya.standalone.initialize(name='python')
         # print(".....................................em...........????")
+    def _invoke_mayapy(self):
+        # replace mayaPath with the path on your system to mayapy.exe
+        # replace scriptPath with the path to the script you just saved
+        # def massAddRenderLayer(filenames,layername):
+        pr_maya = subprocess.Popen([self._mayapy_path,self._exec],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        out,err = pr_maya.communicate()
+        exitcode = pr_maya.returncode
+        if str(exitcode) != '0':
+            print(err)
+            logger.error(">>> some thing wrong!!!...")
+        else:
+            logger.info(">>>Successful!!!!")
     def update_mayaloc(self):
         """
             radiobutton connected
@@ -205,6 +224,7 @@ class BnStandaloneTools_UI(QMainWindow):
             self._mayapy_path = cmd.joinpath(self._maya_location, 'bin', 'mayapy.exe')
             self.ui.lb_mayapy.setText(">>>" +  self._mayapy_path)
         else:
+            self._mayapy_path = None
             self.ui.lb_mayapy.setText(">>>" + u"没有找到maya{}安装路径".format(self.maya_version))
 
     def _fn_maya_location(self):
@@ -228,7 +248,7 @@ class BnStandaloneTools_UI(QMainWindow):
         moduleDir = cmd.tierpath(sys.argv[0],1)
         autoLayer_py = cmd.joinpath(moduleDir,'execs','anAutoLayer.py')
         self._exec = autoLayer_py
-
+        self.exec_txt.setText(self._exec)
     def fn_set_env(self):
         os.environ["MAYA_LOCATION"] = self._maya_location
         os.environ["PYTHONHOME"] = self._python_home
