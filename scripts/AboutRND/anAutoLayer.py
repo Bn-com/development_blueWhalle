@@ -62,6 +62,8 @@ class AnAutoLayer(object):
         self.imageFormat = 'exr'
         self.saveHoldTiers = True
         self.refAnim = None
+        self._aoSubDivSet_name = 'aoSubDivSet'
+        self._aosubdivset_node = None
         #====================run mode =====================
         self._runmode = "reference"
         self._mayaFileTypeDesc= {'ma':'mayaAscii','mb':'mayaBinary'}
@@ -106,6 +108,8 @@ class AnAutoLayer(object):
         self.imageFormat = 'exr'
         self.saveHoldTiers = True
         self.refAnim = None
+        self._aoSubDivSet_name = 'aoSubDivSet'
+        self._aosubdivset_node = None
     @property
     def anFile(self):
         return self._anFile
@@ -228,7 +232,8 @@ class AnAutoLayer(object):
         self._2basename_chr_spare = "{0}_{1}_{2}.{3}".format(self._proj,self._shotID,self._lightSuffxi_chr,self.fileformatSpare)
         self._2basename_bg = "{0}_{1}_{2}.{3}".format(self._proj,self._shotID,self._lightSuffxi_bg,self.fileformat)
         self._2basename_bg_spare = "{0}_{1}_{2}.{3}".format(self._proj,self._shotID,self._lightSuffxi_bg,self.fileformatSpare)
-        self.save2folder = self._fn_outputFolderTier(self.anFile,self._shotType) if self.saveHoldTiers else ""
+        # self.save2folder = self._fn_outputFolderTier(self.anFile,self._shotType) if self.saveHoldTiers else ""
+        self.save2folder = "/".join(self.anBsnmSplt[1:self._shotType])
         print(">>> via file name calculates output file name........DONE!!!!")
     def varsFromMaya(self):
         self._mayaDefaultResolution = pm.PyNode("defaultResolution")
@@ -337,7 +342,7 @@ class AnAutoLayer(object):
             print(">>> Don't Find template file..")
             self.fn_wr2issuefile()
         # detect output file exist or not
-        needRun = self.fn_detect_optOrNot()
+        needRun = self._fn_detect_optOrNot()
         if not needRun:
             print(">>>Files Alread Exist...Skipped..................")
             return
@@ -348,6 +353,8 @@ class AnAutoLayer(object):
         self._referenceAnim()
         print(">>>                  STEP: list all assets .....................")
         self.fn_list_assets()
+        # create subdivision set
+        self.fn_create_arnold_set()
         # stpe2 set camera and resolution,fps,timerange
         print(">>>                  STEP: set some arugments ....................")
         self.config_renderBasic()
@@ -479,6 +486,12 @@ class AnAutoLayer(object):
         if not refMembers['models']:
             self.issue.update({"Models Error": [oneRef.path]})
             mc.warning(">>> WARNING: Procedure Can not find the models of current reference")
+        #----add on Apr 17 2021 ---- for arnold subdivision
+        if refSort in ['PRO', 'CHR']:
+            if refMembers['models']: self._aosubdivset_node.addMembers(refMembers['models'])
+            else:
+                if refMembers['topGrp']:self._aosubdivset_node.addMembers(refMembers['models'])
+        #-------------------------------------------------------------
         # bgcolor
         bg_rndly = self._rndLayers['bg']
         if refSort in ['BG']:
@@ -676,7 +689,7 @@ class AnAutoLayer(object):
         self._minTime = pm.env.minTime
         self._maxTime = pm.env.maxTime
         pm.newFile(f=True)
-    def fn_detect_optOrNot(self):
+    def _fn_detect_optOrNot(self):
         u"""
             检测输出的文件是否已经存在。根据是否覆盖来判断 是否需要 运行执行。
         :return:
@@ -690,6 +703,59 @@ class AnAutoLayer(object):
             else: return False
         else:
             return True
+    def fn_create_arnold_set(self,):
+        """
+            add a arnold subdivision set group
+        :return:
+        """
+
+        if not mc.objExists(self._arnodSubSet):
+            mc.sets(name=self._arnodSubSet,em=True)
+            mc.ddAttr(self._arnodSubSet,ln='aiSubdivType',at='enum',en='none:catclark:linear',dv=1)
+            mc.addAttr(self._arnodSubSet,ln='aiSubdivIterations',at='byte',dv=2)
+        self._aosubdivset_node = pm.PyNode(self._aoSubDivSet_name)
+
+    def fn_allRefs2arSubSet(self):
+        """
+            add all reference to subdiv set
+        :return:
+        """
+        # --- determin arnold subdivision set
+        self.fn_create_arnold_set()
+        # ---- list top animation ref file.
+        topAnimRef = pm.listReferences()[0]
+        asset_refs = topAnimRef.subReferences()
+        for e_ref in asset_refs:
+            self.fn_add_ref_meshes2sets(e_ref)
+    def fn_add_ref_meshes2sets(self, oneRef):
+        """
+            add reference meshes to arnold sub div set
+        :param oneRef:
+        :return:
+        """
+        refSort = self.sort_asset2(oneRef)
+        print(">>>     Deal with No.{} Referecen:  {}".format(self.assetRefs.index(oneRef), oneRef.path))
+        if not oneRef.isLoaded():
+            if not os.path.exists(oneRef.path):
+                if 'Missed Reference File' in self.issue:
+                    self.issue['Miss Reference File'].append(oneRef.path)
+                else:
+                    self.issue.update({'Miss Reference File': [oneRef.path]})
+                return
+            oneRef.load(prompt=False, f=True)
+        refMembers = self._list_ref_members(oneRef)
+        if not refMembers['topGrp']:
+            self.issue.update({"Top Group Error": [oneRef.path]})
+            mc.warning(">>> WARNING: Procedure Can not find the top group of current reference")
+        if not refMembers['models']:
+            self.issue.update({"Models Error": [oneRef.path]})
+            mc.warning(">>> WARNING: Procedure Can not find the models of current reference")
+        # ----add on Apr 17 2021 ---- for arnold subdivision
+        if refSort in ['PRO', 'CHR']:
+            if refMembers['models']:
+                self._aosubdivset_node.addMembers(refMembers['models'])
+            else:
+                if refMembers['topGrp']: self._aosubdivset_node.addMembers(refMembers['models'])
 def main(animDirs,saveRespective=True,outputDir=None):
     #animDir = r"Y:\project\TV\XXBBT\render\AN\ep130\seq_003"
     if isinstance(animDirs,(str,unicode)):animDirs = [animDirs]
@@ -729,6 +795,7 @@ def main(animDirs,saveRespective=True,outputDir=None):
             elif n == cnt-1:
                 print(">>> files in the folder < {} > played Done!!!".format(edir))
     # pm.cmdFileOutput(c=1)
+
 if __name__ == "__main__":
     # =========================copy to maya script editor======================================
     """
