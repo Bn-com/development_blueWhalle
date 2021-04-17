@@ -708,13 +708,13 @@ class AnAutoLayer(object):
         :return:
         """
 
-        if not mc.objExists(self._arnodSubSet):
-            mc.sets(name=self._arnodSubSet,em=True)
-            mc.ddAttr(self._arnodSubSet,ln='aiSubdivType',at='enum',en='none:catclark:linear',dv=1)
-            mc.addAttr(self._arnodSubSet,ln='aiSubdivIterations',at='byte',dv=2)
+        if not mc.objExists(self._aoSubDivSet_name):
+            mc.sets(name=self._aoSubDivSet_name,em=True)
+            mc.ddAttr(self._aoSubDivSet_name,ln='aiSubdivType',at='enum',en='none:catclark:linear',dv=1)
+            mc.addAttr(self._aoSubDivSet_name,ln='aiSubdivIterations',at='byte',dv=2)
         self._aosubdivset_node = pm.PyNode(self._aoSubDivSet_name)
 
-    def fn_allRefs2arSubSet(self):
+    def fn_allRefs2aoSubSet(self):
         """
             add all reference to subdiv set
         :return:
@@ -726,6 +726,7 @@ class AnAutoLayer(object):
         asset_refs = topAnimRef.subReferences()
         for e_ref in asset_refs:
             self.fn_add_ref_meshes2sets(e_ref)
+        pm.saveFile(f=True)
     def fn_add_ref_meshes2sets(self, oneRef):
         """
             add reference meshes to arnold sub div set
@@ -755,6 +756,7 @@ class AnAutoLayer(object):
                 self._aosubdivset_node.addMembers(refMembers['models'])
             else:
                 if refMembers['topGrp']: self._aosubdivset_node.addMembers(refMembers['models'])
+        print(">>> add mesh or group  to subdivision set...........")
 def main(animDirs,saveRespective=True,outputDir=None):
     #animDir = r"Y:\project\TV\XXBBT\render\AN\ep130\seq_003"
     if isinstance(animDirs,(str,unicode)):animDirs = [animDirs]
@@ -825,5 +827,24 @@ proj_an_dir = r“Y:\project\TV\XXBBT\render\AN"
 anDirs=[r"{}\ep145\seq{:0>3}".format(proj_an_dir,shotId) for shotId in [2]]
 # anDirs=[r"{}\ep130\seq_002\XXBBT_ep130_seq002_sc008.Ani_ani.v004.ma".format(proj_an_dir)]
 print("\n".join(anDirs))
-anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0408")    
+anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0408")   
+
+#------------- add mesh to arnold subdivision set--------------------------------------------
+import sys,os,re,glob
+from maya import standalone; standalone.initialize()
+py_sp_dir = r"F:\development\.venv\Python.2.7.11\Lib\site-packages"
+kit_dir  = r"F:\development\scripts"
+if py_sp_dir not in sys.path: 
+    sys.path.append(py_sp_dir)
+if kit_dir not in sys.path:
+    sys.path.append(kit_dir)
+import pymel.core as pm
+searchDir = r"E:\animAotuLayer_outputDir_0417_addSubSet\seq004"
+maya_files = glob.glob("{}\*.mb".format(searchDir))
+maya_files.extend(glob.glob("{}\*.ma".format(searchDir)))
+for e_f in maya_files:
+    pm.openFile(e_f,f=True,prompt=False)
+    from AboutRND import anAutoLayer;reload(anAutoLayer)
+    autolayer = anAutoLayer.AnAutoLayer()
+    autolayer.fn_allRefs2aoSubSet()
     """
