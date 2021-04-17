@@ -199,19 +199,20 @@ class AnAutoLayer(object):
         self._outputPrefix = self.confData['outputPrefix']
         self.imageFormat = self.confData['image format'] if self.confData.has_key('image format') else 'exr'
         print(">>> config data settled........")
-    def analyseAnFilePath(self):
+    def analyseAnFilePath(self,dealFile=None):
         """
             via animation file analyse needed argument
         :return:
         """
-        self.anDir = os.path.dirname(self.anFile)
-        self.anBasename = os.path.basename(self.anFile)
+        if not dealFile: dealFile = self.anFile
+        self.anDir = os.path.dirname(dealFile)
+        self.anBasename = os.path.basename(dealFile)
         self.anBsnmStrip, self.anExt = os.path.splitext(self.anBasename)
         self.anBsnmSplt = self.anBsnmStrip.split('_')
         self._proj = self.anBsnmSplt[0]
-        yml_fpth = os.path.join(os.path.dirname(__file__), "confs", self._proj, "autoLayerConf.yml")
         # print(yml_fpth)
-        if not self._profiles: self.profiles = yml_fpth
+        self.yml_fpth = os.path.join(os.path.dirname(__file__), "confs", self._proj, "autoLayerConf.yml")
+        if not self._profiles: self.profiles = self.yml_fpth
 
     def analyseFilename(self):
         """
@@ -243,7 +244,7 @@ class AnAutoLayer(object):
     def fn_parsNecessityVars(self):
         """
             assign value to every necessity variables
-        :return:
+            :return:
         """
         # 解析动画文件路径 获得项目 缩写，项目配置文件路径
         self.analyseAnFilePath()
@@ -710,7 +711,7 @@ class AnAutoLayer(object):
 
         if not mc.objExists(self._aoSubDivSet_name):
             mc.sets(name=self._aoSubDivSet_name,em=True)
-            mc.ddAttr(self._aoSubDivSet_name,ln='aiSubdivType',at='enum',en='none:catclark:linear',dv=1)
+            mc.addAttr(self._aoSubDivSet_name,ln='aiSubdivType',at='enum',en='none:catclark:linear',dv=1)
             mc.addAttr(self._aoSubDivSet_name,ln='aiSubdivIterations',at='byte',dv=2)
         self._aosubdivset_node = pm.PyNode(self._aoSubDivSet_name)
 
@@ -723,10 +724,11 @@ class AnAutoLayer(object):
         self.fn_create_arnold_set()
         # ---- list top animation ref file.
         topAnimRef = pm.listReferences()[0]
-        asset_refs = topAnimRef.subReferences()
+        asset_refs = pm.listReferences(parentReference=topAnimRef)
         for e_ref in asset_refs:
             self.fn_add_ref_meshes2sets(e_ref)
         pm.saveFile(f=True)
+        print(">>> Add Arnold Subdivision Sets Done!!!!..................................")
     def fn_add_ref_meshes2sets(self, oneRef):
         """
             add reference meshes to arnold sub div set
@@ -824,10 +826,10 @@ import pymel.core as pm
 from AboutRND import anAutoLayer;reload(anAutoLayer)
 proj_an_dir = r“Y:\project\TV\XXBBT\render\AN" 
 #proj_an_dir = r“E:\TDCheck" 
-anDirs=[r"{}\ep145\seq{:0>3}".format(proj_an_dir,shotId) for shotId in [2]]
+anDirs=[r"{}\ep140\seq{:0>3}".format(proj_an_dir,shotId) for shotId in [5]]
 # anDirs=[r"{}\ep130\seq_002\XXBBT_ep130_seq002_sc008.Ani_ani.v004.ma".format(proj_an_dir)]
 print("\n".join(anDirs))
-anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0408")   
+anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0417")   
 
 #------------- add mesh to arnold subdivision set--------------------------------------------
 import sys,os,re,glob
@@ -842,9 +844,14 @@ import pymel.core as pm
 searchDir = r"E:\animAotuLayer_outputDir_0417_addSubSet\seq004"
 maya_files = glob.glob("{}\*.mb".format(searchDir))
 maya_files.extend(glob.glob("{}\*.ma".format(searchDir)))
+
+from AboutRND import anAutoLayer;reload(anAutoLayer)
+<module 'AboutRND.anAutoLayer' from 'F:\development\scripts\AboutRND\anAutoLayer.py'>
 for e_f in maya_files:
     pm.openFile(e_f,f=True,prompt=False)
-    from AboutRND import anAutoLayer;reload(anAutoLayer)
     autolayer = anAutoLayer.AnAutoLayer()
+    autolayer.analyseAnFilePath(e_f)
+    autolayer.readConfData()
     autolayer.fn_allRefs2aoSubSet()
+
     """
