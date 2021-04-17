@@ -68,7 +68,6 @@ class AnAutoLayer(object):
         self._runmode = "reference"
         self._mayaFileTypeDesc= {'ma':'mayaAscii','mb':'mayaBinary'}
         self.fileFormatSymmetry = {'mb': 'ma', 'ma': 'mb'}
-
     def reset(self):
         self._anFile = None
         self._anScname = None  # pm.sceneName()
