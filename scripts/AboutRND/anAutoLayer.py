@@ -614,11 +614,16 @@ class AnAutoLayer(object):
         for e_n in oneRef.nodes():
             if e_n.nodeType() == 'transform':
                 if e_n.getShape():
-                    continue
+                    if e_n.getShape().nodeType() in ['nurbsCurve']:
+                        refTop = e_n
+                        break
+                    else:
+                        continue
                 else:
-                    refTop = e_n
-                    break
-            if not e_n.nodeType() == ['transform']: continue
+                    if not e_n.nodeType() in ['transform']: continue
+                    else:
+                        refTop = e_n
+                        break
         return refTop
     @staticmethod
     def sort_asset(oneRef):
@@ -685,7 +690,7 @@ class AnAutoLayer(object):
         except Exception as e:
             print(e)
             print("OPEN FILE FAILED: < {} >".format(self.anFile))
-            mc.error("...................Oops ...some issues....")
+            # mc.error("...................Oops ...some issues....")
         self._minTime = pm.env.minTime
         self._maxTime = pm.env.maxTime
         pm.newFile(f=True)
@@ -804,7 +809,7 @@ if __name__ == "__main__":
     """
     import os,sys
     
-    
+            
     fileDir = r" F:\Development\Oem\OEM4Maya\scripts"
     if fileDir not in sys.path:
         sys.path.append(fileDir)
@@ -826,11 +831,10 @@ import pymel.core as pm
 from AboutRND import anAutoLayer;reload(anAutoLayer)
 proj_an_dir = r“Y:\project\TV\XXBBT\render\AN" 
 #proj_an_dir = r“E:\TDCheck" 
-anDirs=[r"{}\ep140\seq{:0>3}".format(proj_an_dir,shotId) for shotId in [5]]
-# anDirs=[r"{}\ep130\seq_002\XXBBT_ep130_seq002_sc008.Ani_ani.v004.ma".format(proj_an_dir)]
+anDirs=[r"{}\ep147\seq{:0>3}".format(proj_an_dir,shotId) for shotId in [3]]
+# anDirs=[r"{}\ep140\seq_002\XXBBT_ep130_seq002_sc008.Ani_ani.v004.ma".format(proj_an_dir)]
 print("\n".join(anDirs))
-anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0417")   
-
+anAutoLayer.main(anDirs,saveRespective=1,outputDir=r"E:\animAotuLayer_outputDir_0427")
 #------------- add mesh to arnold subdivision set--------------------------------------------
 import sys,os,re,glob
 from maya import standalone; standalone.initialize()
