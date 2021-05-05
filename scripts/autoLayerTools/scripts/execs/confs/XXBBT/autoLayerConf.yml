@@ -1,0 +1,21 @@
+RENDER:
+  AssetDir:
+    character: Y:/Project/TV/XXBBT/Assets/Chr
+    prop: Y:\project\TV\XXBBT\Assets\Prp
+    setting: Y:/Project/TV/XXBBT/Assets/Scn/
+  ext: exr
+  fps: '25'
+  image format: exr
+  lightSuffix:
+    BG: Lgt_rnd.BG
+    CH: Lgt_rnd.CH
+  outputDir: E:\batch_layer_files
+  outputPrefix: <Scene>/<RenderLayer>/<RenderLayer>
+  projRoot: Y:\project\TV\XXBBT
+  renderer: arnold
+  resolution:
+    height: '1080'
+    width: '1920'
+  searchDir: E:\batch_layer_files
+  shotType: '3'
+  templateDir: Y:\project\TV\XXBBT\render\laye\layerTemp
