@@ -11,4 +11,4 @@ THEOREM: A good programmer should wipe the butts of his predecessors in an amica
         As long as this , code is far away from bugs, and with the god animal protecting
             I love animals. They taste delicious.
 """
-import command
+# import command
